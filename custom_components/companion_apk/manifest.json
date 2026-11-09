@@ -1,6 +1,7 @@
 {
   "domain": "companion_apk",
   "name": "Companion App APK Mirror",
+  "categories": ["computers_network.cloud_developer_tools"],
   "codeowners": ["@bartosekpetr"],
   "config_flow": true,
   "dependencies": ["http"],
