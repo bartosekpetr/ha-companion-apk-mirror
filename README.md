@@ -1,3 +1,5 @@
+<img src="brand/icon.png" alt="" width="96" align="right">
+
 # Companion App APK Mirror
 
 A Home Assistant custom integration that watches
@@ -150,6 +152,13 @@ python3 tests/test_logic.py
 uv venv .venv && uv pip install pytest-homeassistant-custom-component aioresponses
 .venv/bin/python -m pytest tests -q
 ```
+
+## Brand assets
+
+The icon and its source live in [`brand/`](brand/README.md). It already appears
+on the install page; Home Assistant itself loads integration icons from
+`brands.home-assistant.io`, so showing it in **Devices & services** needs the
+PNGs submitted to [home-assistant/brands](https://github.com/home-assistant/brands).
 
 ## License
 

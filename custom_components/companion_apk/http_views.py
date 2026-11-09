@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import logging
 from html import escape
 from typing import TYPE_CHECKING
@@ -27,6 +28,39 @@ if TYPE_CHECKING:
     from .coordinator import CompanionApkCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+# The brand icon, inlined so the install page needs no external assets. Kept
+# byte-for-byte in step with brand/icon.svg by tests/test_brand_icon.py.
+ICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">'
+    '<defs>'
+    '<linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">'
+    '<stop offset="0" stop-color="#14b8a6"/>'
+    '<stop offset="1" stop-color="#0f766e"/>'
+    "</linearGradient>"
+    '<mask id="behind">'
+    '<rect width="256" height="256" fill="#fff"/>'
+    '<rect x="26" y="60" width="144" height="186" rx="28" fill="#000"/>'
+    "</mask>"
+    "</defs>"
+    '<rect width="256" height="256" rx="58" fill="url(#tile)"/>'
+    '<g fill="none" stroke="#ffffff" stroke-width="12">'
+    '<rect x="82" y="38" width="112" height="154" rx="12" stroke-opacity="0.65"'
+    ' mask="url(#behind)"/>'
+    '<rect x="42" y="76" width="112" height="154" rx="12"/>'
+    "</g>"
+    '<g fill="#ffffff">'
+    '<rect x="89.5" y="100.5" width="17" height="49"/>'
+    '<path d="M68 147.4h60L98 181.4Z"/>'
+    '<rect x="70" y="202.4" width="56" height="12" rx="6"/>'
+    "</g>"
+    "</svg>"
+)
+
+ICON_DATA_URI = (
+    "data:image/svg+xml;base64,"
+    + base64.b64encode(ICON_SVG.encode("utf-8")).decode("ascii")
+)
 
 VIEWS_REGISTERED_KEY = f"{DOMAIN}_views_registered"
 
@@ -294,13 +328,16 @@ def _render_page(flavor: str, latest, mirrored: MirroredApk | None) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Home Assistant Companion - local install</title>
+<link rel="icon" href="{ICON_DATA_URI}">
 <style>
   :root {{ color-scheme: light dark; }}
   body {{ font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
          margin: 0; padding: 24px; line-height: 1.5; max-width: 42rem;
          margin-inline: auto; }}
+  header {{ display: flex; align-items: center; gap: .9rem; margin-bottom: 1.5rem; }}
+  header img {{ flex: none; width: 56px; height: 56px; border-radius: 13px; }}
   h1 {{ font-size: 1.4rem; margin: 0 0 .25rem; }}
-  p.sub {{ margin: 0 0 1.5rem; opacity: .7; }}
+  p.sub {{ margin: 0; opacity: .7; }}
   .cta {{ display: block; text-align: center; padding: 1rem 1.25rem;
           border-radius: 12px; background: #03a9f4; color: #fff;
           font-size: 1.1rem; font-weight: 600; text-decoration: none;
@@ -320,8 +357,13 @@ def _render_page(flavor: str, latest, mirrored: MirroredApk | None) -> str:
 </style>
 </head>
 <body>
-<h1>Home Assistant Companion</h1>
-<p class="sub">Served locally by your Home Assistant instance.</p>
+<header>
+  <img src="{ICON_DATA_URI}" alt="">
+  <div>
+    <h1>Home Assistant Companion</h1>
+    <p class="sub">Served locally by your Home Assistant instance.</p>
+  </div>
+</header>
 {upstream}
 {action}
 {details}

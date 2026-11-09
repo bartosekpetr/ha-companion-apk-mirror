@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Companion App APK Mirror">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#14b8a6"/>
+      <stop offset="1" stop-color="#0f766e"/>
+    </linearGradient>
+    <mask id="behind">
+      <rect width="256" height="256" fill="#fff"/>
+      <rect x="26" y="60" width="144" height="186" rx="28" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="256" height="256" rx="58" fill="url(#tile)"/>
+  <g fill="none" stroke="#ffffff" stroke-width="12">
+    <rect x="82" y="38" width="112" height="154" rx="12" stroke-opacity="0.65" mask="url(#behind)"/>
+    <rect x="42" y="76" width="112" height="154" rx="12"/>
+  </g>
+  <g fill="#ffffff">
+    <rect x="89.5" y="100.5" width="17" height="49"/>
+    <path d="M68 147.4h60L98 181.4Z"/>
+    <rect x="70" y="202.4" width="56" height="12" rx="6"/>
+  </g>
+</svg>
