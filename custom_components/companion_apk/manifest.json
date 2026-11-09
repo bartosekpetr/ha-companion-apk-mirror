@@ -1,0 +1,13 @@
+{
+  "domain": "companion_apk",
+  "name": "Companion App APK Mirror",
+  "codeowners": ["@bartosekpetr"],
+  "config_flow": true,
+  "dependencies": ["http"],
+  "documentation": "https://github.com/bartosekpetr/ha-companion-apk-mirror",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/bartosekpetr/ha-companion-apk-mirror/issues",
+  "requirements": [],
+  "version": "1.0.0"
+}

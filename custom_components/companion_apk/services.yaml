@@ -1,0 +1,21 @@
+download:
+  fields:
+    version:
+      required: false
+      example: "2026.11.1"
+      selector:
+        text:
+
+refresh:
+
+purge:
+  fields:
+    keep_versions:
+      required: false
+      example: 2
+      selector:
+        number:
+          min: 1
+          max: 10
+          step: 1
+          mode: box

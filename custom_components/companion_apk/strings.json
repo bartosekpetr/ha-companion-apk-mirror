@@ -1,0 +1,101 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Companion App APK Mirror",
+        "description": "Mirrors the Home Assistant companion app APK from GitHub and serves it on this Home Assistant's own URL, so a local tablet can update without the Play Store.",
+        "data": {
+          "flavor": "Build flavor",
+          "auto_download": "Download new releases automatically",
+          "include_prereleases": "Include beta releases",
+          "scan_interval_hours": "Check GitHub every",
+          "keep_versions": "Mirrored versions to keep",
+          "require_auth": "Require Home Assistant authentication",
+          "github_token": "GitHub token (optional)"
+        },
+        "data_description": {
+          "flavor": "'full' includes Google services (push notifications), 'minimal' does not. Pick the one that matches your tablet.",
+          "require_auth": "Leave off so the tablet can download the APK without logging in. The endpoints only serve the public APK.",
+          "github_token": "Only needed if you hit GitHub's anonymous API rate limit of 60 requests per hour."
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the GitHub API.",
+      "invalid_auth": "GitHub rejected the token, or the anonymous rate limit was reached.",
+      "no_release": "No recent release publishes an APK for this build flavor.",
+      "unknown_flavor": "Unknown build flavor."
+    },
+    "abort": {
+      "single_instance_allowed": "Companion App APK Mirror is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Mirror options",
+        "data": {
+          "flavor": "Build flavor",
+          "auto_download": "Download new releases automatically",
+          "include_prereleases": "Include beta releases",
+          "scan_interval_hours": "Check GitHub every",
+          "keep_versions": "Mirrored versions to keep",
+          "require_auth": "Require Home Assistant authentication",
+          "github_token": "GitHub token (optional)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not reach the GitHub API.",
+      "invalid_auth": "GitHub rejected the token, or the anonymous rate limit was reached.",
+      "no_release": "No recent release publishes an APK for this build flavor.",
+      "unknown_flavor": "Unknown build flavor."
+    }
+  },
+  "selector": {
+    "flavor": {
+      "options": {
+        "full": "Phone/tablet - full (with Google services)",
+        "minimal": "Phone/tablet - minimal (no Google services)",
+        "automotive_full": "Android Automotive - full",
+        "automotive_minimal": "Android Automotive - minimal",
+        "wear": "Wear OS"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "latest_release": { "name": "Latest release" },
+      "mirrored_version": { "name": "Mirrored version" }
+    },
+    "update": {
+      "mirror": { "name": "Companion app APK" }
+    }
+  },
+  "services": {
+    "download": {
+      "name": "Download APK",
+      "description": "Mirrors a release APK into Home Assistant and serves it locally.",
+      "fields": {
+        "version": {
+          "name": "Version",
+          "description": "Release to mirror, for example 2026.11.1. Defaults to the newest release."
+        }
+      }
+    },
+    "refresh": {
+      "name": "Check for a new release",
+      "description": "Queries GitHub immediately instead of waiting for the next scheduled check."
+    },
+    "purge": {
+      "name": "Purge old APKs",
+      "description": "Deletes mirrored APKs beyond the newest few.",
+      "fields": {
+        "keep_versions": {
+          "name": "Versions to keep",
+          "description": "How many of the newest APKs to keep. Defaults to the configured value."
+        }
+      }
+    }
+  }
+}
