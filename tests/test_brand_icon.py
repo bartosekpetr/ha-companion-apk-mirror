@@ -10,7 +10,11 @@ from pathlib import Path
 from custom_components.companion_apk.http_views import ICON_DATA_URI, ICON_SVG
 
 SVG_NS = "{http://www.w3.org/2000/svg}"
-BRAND_DIR = Path(__file__).resolve().parents[1] / "brand"
+REPO_DIR = Path(__file__).resolve().parents[1]
+SVG_PATH = REPO_DIR / "brand" / "icon.svg"
+
+# Home Assistant 2026.3+ only picks the icon up from this exact path.
+PNG_DIR = REPO_DIR / "custom_components" / "companion_apk" / "brand"
 
 
 def _shapes(svg: str) -> list[tuple[str, dict[str, str]]]:
@@ -31,7 +35,7 @@ def _png_size(path: Path) -> tuple[int, int]:
 
 
 def test_inline_icon_matches_brand_source():
-    source = (BRAND_DIR / "icon.svg").read_text(encoding="utf-8")
+    source = SVG_PATH.read_text(encoding="utf-8")
     assert _shapes(ICON_SVG) == _shapes(source)
     assert ET.fromstring(ICON_SVG).get("viewBox") == ET.fromstring(source).get(
         "viewBox"
@@ -45,6 +49,7 @@ def test_icon_data_uri_is_decodable_svg():
     assert decoded == ICON_SVG
 
 
-def test_brand_pngs_match_home_assistant_brands_sizes():
-    assert _png_size(BRAND_DIR / "icon.png") == (256, 256)
-    assert _png_size(BRAND_DIR / "icon@2x.png") == (512, 512)
+def test_brand_pngs_are_where_home_assistant_looks_for_them():
+    """The icon only reaches the UI from custom_components/<domain>/brand/."""
+    assert _png_size(PNG_DIR / "icon.png") == (256, 256)
+    assert _png_size(PNG_DIR / "icon@2x.png") == (512, 512)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render brand/icon.svg to the PNG sizes the Home Assistant brands repo wants.
+"""Render brand/icon.svg to the PNG sizes Home Assistant serves for a brand.
 
 No SVG rasteriser is assumed to be installed, so this walks the icon's own XML
 and redraws it with Pillow at 8x, then downsamples. It understands exactly the
@@ -21,7 +21,12 @@ SVG_NS = "{http://www.w3.org/2000/svg}"
 SUPERSAMPLE = 8
 SIZES = {"icon.png": 256, "icon@2x.png": 512}
 
-BRAND_DIR = Path(__file__).resolve().parent.parent / "brand"
+REPO_DIR = Path(__file__).resolve().parent.parent
+SVG_PATH = REPO_DIR / "brand" / "icon.svg"
+
+# Home Assistant 2026.3 and later serve an integration's own brand/ directory
+# from /api/brands/integration/<domain>/, ahead of the brands CDN.
+OUT_DIR = REPO_DIR / "custom_components" / "companion_apk" / "brand"
 
 
 def _f(el: ET.Element, name: str, default: float = 0.0) -> float:
@@ -151,12 +156,12 @@ def render(svg_path: Path, px: int) -> Image.Image:
 
 
 def main() -> None:
-    """Write every PNG size next to the SVG."""
-    svg = BRAND_DIR / "icon.svg"
+    """Write every PNG size into the integration's brand directory."""
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
     for name, px in SIZES.items():
-        out = BRAND_DIR / name
-        render(svg, px).save(out, optimize=True)
-        print(f"{out.relative_to(BRAND_DIR.parent)}  {px}x{px}")
+        out = OUT_DIR / name
+        render(SVG_PATH, px).save(out, optimize=True)
+        print(f"{out.relative_to(REPO_DIR)}  {px}x{px}")
 
 
 if __name__ == "__main__":

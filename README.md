@@ -1,4 +1,4 @@
-<img src="brand/icon.png" alt="" width="96" align="right">
+<img src="custom_components/companion_apk/brand/icon.png" alt="" width="96" align="right">
 
 # Companion App APK Mirror
 
@@ -155,10 +155,14 @@ uv venv .venv && uv pip install pytest-homeassistant-custom-component aiorespons
 
 ## Brand assets
 
-The icon and its source live in [`brand/`](brand/README.md). It already appears
-on the install page; Home Assistant itself loads integration icons from
-`brands.home-assistant.io`, so showing it in **Devices & services** needs the
-PNGs submitted to [home-assistant/brands](https://github.com/home-assistant/brands).
+This integration ships its own icon, so **Settings → Devices & services** shows
+it on Home Assistant 2026.3 and later, where `custom_components/<domain>/brand/`
+is served directly. Older versions show the usual placeholder. The install page
+carries the same mark as its favicon and header.
+
+The SVG source and the design notes are in [`brand/`](brand/README.md). The icon
+is the integration's own; the mirrored APK is untouched and served exactly as
+published upstream.
 
 ## License
 
