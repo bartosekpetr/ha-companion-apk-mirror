@@ -3,10 +3,13 @@
 What this project is made of, where an artifact's identity is established, where
 it could be substituted, and which way data moves across every edge.
 
-*Diagram current as of `f4e1409` — 2026-11-19.* First revision; kept up to date
-by the "Architecture diagram upkeep — ha companion apk mirror" routine, which
-re-checks this file against the commits made since that baseline whenever work
-happens in the project.
+*Diagram current as of `075e665` — 2026-11-20.* Kept up to date by the
+"Architecture diagram upkeep — ha companion apk mirror" routine, which re-checks
+this file against the commits made since that baseline whenever work happens in
+the project. Checked `f4e1409..075e665` on 2026-11-20: that range contains only
+the commit that added this file, so no claim below was revised. The derivation
+sha in the next paragraph stays at `f4e1409` for that reason — the baseline moved
+forward, the content was not re-derived.
 
 Derived entirely from the code, config, CI workflow, tests and docs in this
 repository at `f4e1409`. No live system was touched: no call was made to
