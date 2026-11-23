@@ -3,13 +3,14 @@
 What this project is made of, where an artifact's identity is established, where
 it could be substituted, and which way data moves across every edge.
 
-*Diagram current as of `075e665` — 2026-11-20.* Kept up to date by the
+*Diagram current as of `20c93a6` — 2026-11-23.* Kept up to date by the
 "Architecture diagram upkeep — ha companion apk mirror" routine, which re-checks
 this file against the commits made since that baseline whenever work happens in
-the project. Checked `f4e1409..075e665` on 2026-11-20: that range contains only
-the commit that added this file, so no claim below was revised. The derivation
-sha in the next paragraph stays at `f4e1409` for that reason — the baseline moved
-forward, the content was not re-derived.
+the project. Checked `f4e1409..075e665` on 2026-11-20 and `075e665..20c93a6` on
+2026-11-23; neither range touches anything outside this file, so no claim below
+has been revised. The derivation sha in the next paragraph therefore stays at
+`f4e1409`: `git diff f4e1409..HEAD` is this document and nothing else, so every
+statement below still describes exactly the tree it names.
 
 Derived entirely from the code, config, CI workflow, tests and docs in this
 repository at `f4e1409`. No live system was touched: no call was made to
