@@ -33,7 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 # byte-for-byte in step with brand/icon.svg by tests/test_brand_icon.py.
 ICON_SVG = (
     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">'
-    '<defs>'
+    "<defs>"
     '<linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">'
     '<stop offset="0" stop-color="#14b8a6"/>'
     '<stop offset="1" stop-color="#0f766e"/>'
@@ -57,10 +57,9 @@ ICON_SVG = (
     "</svg>"
 )
 
-ICON_DATA_URI = (
-    "data:image/svg+xml;base64,"
-    + base64.b64encode(ICON_SVG.encode("utf-8")).decode("ascii")
-)
+ICON_DATA_URI = "data:image/svg+xml;base64," + base64.b64encode(
+    ICON_SVG.encode("utf-8")
+).decode("ascii")
 
 VIEWS_REGISTERED_KEY = f"{DOMAIN}_views_registered"
 
@@ -99,9 +98,7 @@ def _coordinator(request: web.Request) -> CompanionApkCoordinator | None:
     return None
 
 
-def _check_auth(
-    request: web.Request, coordinator: CompanionApkCoordinator
-) -> None:
+def _check_auth(request: web.Request, coordinator: CompanionApkCoordinator) -> None:
     """Enforce the optional "require Home Assistant login" option.
 
     The views are registered with ``requires_auth = False`` so the setting can
@@ -155,9 +152,7 @@ def _apk_response(
         coordinator.store.file_path(entry),
         headers={
             hdrs.CONTENT_TYPE: APK_CONTENT_TYPE,
-            hdrs.CONTENT_DISPOSITION: (
-                f'attachment; filename="{entry.filename}"'
-            ),
+            hdrs.CONTENT_DISPOSITION: (f'attachment; filename="{entry.filename}"'),
             hdrs.CACHE_CONTROL: "no-cache",
             "X-Apk-Version": entry.version,
             "X-Apk-Sha256": entry.sha256,
@@ -312,9 +307,7 @@ def _render_page(flavor: str, latest, mirrored: MirroredApk | None) -> str:
             "page.</p>"
         )
 
-    if latest is not None and (
-        mirrored is None or mirrored.version != latest.version
-    ):
+    if latest is not None and (mirrored is None or mirrored.version != latest.version):
         upstream = (
             f'<p class="notice">Upstream release {escape(latest.version)} '
             f"({escape(_format_size(latest.size))}) has not been mirrored yet.</p>"

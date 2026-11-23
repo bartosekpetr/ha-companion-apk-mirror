@@ -33,9 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.UPDATE]
 
-SERVICE_DOWNLOAD_SCHEMA = vol.Schema(
-    {vol.Optional(ATTR_VERSION): cv.string}
-)
+SERVICE_DOWNLOAD_SCHEMA = vol.Schema({vol.Optional(ATTR_VERSION): cv.string})
 SERVICE_PURGE_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_KEEP_VERSIONS): vol.All(

@@ -59,9 +59,7 @@ class CompanionApkCoordinator(DataUpdateCoordinator[CompanionApkData]):
 
     config_entry: CompanionApkConfigEntry
 
-    def __init__(
-        self, hass: HomeAssistant, entry: CompanionApkConfigEntry
-    ) -> None:
+    def __init__(self, hass: HomeAssistant, entry: CompanionApkConfigEntry) -> None:
         """Initialise the coordinator."""
         self.store = ApkStore(hass)
         self._download_lock = asyncio.Lock()
@@ -196,9 +194,10 @@ class CompanionApkCoordinator(DataUpdateCoordinator[CompanionApkData]):
                 headers=headers,
                 timeout=ClientTimeout(total=API_TIMEOUT_SECONDS),
             ) as response:
-                if response.status in (401, 403) and "rate limit" in (
-                    await response.text()
-                ).lower():
+                if (
+                    response.status in (401, 403)
+                    and "rate limit" in (await response.text()).lower()
+                ):
                     raise UpdateFailed(
                         "GitHub API rate limit reached. Add a personal access "
                         "token in the integration options, or poll less often."

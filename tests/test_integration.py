@@ -143,8 +143,7 @@ async def test_setup_mirrors_and_serves_the_apk(
     assert mirrored.attributes["size_bytes"] == len(APK_BODY)
 
     apk_path = (
-        entry.runtime_data.store.path
-        / "home-assistant-companion-full-2026.11.1.apk"
+        entry.runtime_data.store.path / "home-assistant-companion-full-2026.11.1.apk"
     )
     assert apk_path.is_file()
     assert apk_path.read_bytes() == APK_BODY
@@ -311,9 +310,7 @@ async def test_old_versions_are_purged(
 
     store = entry.runtime_data.store
     assert [item.version for item in store.entries] == ["2026.11.1", "2026.10.1"]
-    assert not (
-        store.path / "home-assistant-companion-full-2026.8.4.apk"
-    ).exists()
+    assert not (store.path / "home-assistant-companion-full-2026.8.4.apk").exists()
 
     removed = await hass.services.async_call(
         DOMAIN, "purge", {"keep_versions": 1}, blocking=True, return_response=True

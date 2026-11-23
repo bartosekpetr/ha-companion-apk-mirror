@@ -115,9 +115,7 @@ def _normalise(user_input: dict[str, Any]) -> dict[str, Any]:
     data[CONF_SCAN_INTERVAL_HOURS] = int(
         data.get(CONF_SCAN_INTERVAL_HOURS, DEFAULT_SCAN_INTERVAL_HOURS)
     )
-    data[CONF_KEEP_VERSIONS] = int(
-        data.get(CONF_KEEP_VERSIONS, DEFAULT_KEEP_VERSIONS)
-    )
+    data[CONF_KEEP_VERSIONS] = int(data.get(CONF_KEEP_VERSIONS, DEFAULT_KEEP_VERSIONS))
     data[CONF_GITHUB_TOKEN] = str(data.get(CONF_GITHUB_TOKEN) or "").strip()
     return data
 
