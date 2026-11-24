@@ -3,20 +3,27 @@
 What this project is made of, where an artifact's identity is established, where
 it could be substituted, and which way data moves across every edge.
 
-*Diagram current as of `20c93a6` — 2026-11-23.* Kept up to date by the
+*Diagram current as of `227c501` — 2026-11-24.* Kept up to date by the
 "Architecture diagram upkeep — ha companion apk mirror" routine, which re-checks
 this file against the commits made since that baseline whenever work happens in
 the project. Checked `f4e1409..075e665` on 2026-11-20 and `075e665..20c93a6` on
-2026-11-23; neither range touches anything outside this file, so no claim below
-has been revised. The derivation sha in the next paragraph therefore stays at
-`f4e1409`: `git diff f4e1409..HEAD` is this document and nothing else, so every
-statement below still describes exactly the tree it names.
+2026-11-23; neither range touched anything outside this file. `20c93a6..227c501`
+**did** change the system: `227c501` rewrote the CI workflow's permission and
+pinning model, so §2, §5, §6, §7 and §8 are revised here. Nothing else moved —
+the five Python and test files in that commit are `ruff format` reflows with no
+behavioural change, and `github.py`, `store.py`, `const.py`, `sensor.py`,
+`update.py` and `entity.py` are byte-identical since `f4e1409`. Every claim in
+§0, §1, §3 and §4 therefore still stands as written.
 
-Derived entirely from the code, config, CI workflow, tests and docs in this
-repository at `f4e1409`. No live system was touched: no call was made to
-`api.github.com`, no APK was downloaded, no Android device was contacted. §8 is
-the honest confidence table and it names what was never probed rather than
-drawing it as if it had been.
+Derived from the code, config, CI workflow, tests and docs in this repository at
+`227c501`. No live system belonging to this project was touched: no release was
+fetched from the GitHub releases API, no APK was downloaded, no Home Assistant
+instance and no Android device was contacted. Read-only HTTPS GETs *were* made
+for public GitHub Actions metadata, and §5.1 rests on them: the `action.yml` of
+each pinned action at exactly its pinned SHA, the file listing of the `hacs/action`
+commit at its pinned SHA, and the `action.yml` of the `astral-sh/ruff-action@v4.1.0`
+that `227c501` removed. §8 is the honest confidence table and it names what was
+never probed rather than drawing it as if it had been.
 
 ---
 
@@ -34,7 +41,8 @@ other**:
 
 **No GitHub Actions workflow in this repository fetches, mirrors, re-publishes
 or releases an APK.** The only workflow (`.github/workflows/validate.yml`) runs
-hassfest, the HACS action, pytest and ruff against the Python source. The
+hassfest, the HACS action, pytest, and ruff's lint and format checks against the
+Python source. The
 fetch-and-republish happens at runtime, on the user's own Home Assistant host,
 under that host's network identity and filesystem permissions.
 
@@ -61,9 +69,9 @@ are about Pipeline A; §5 is the permission boundary of Pipeline B's workflow.
   └────┬──────────────────┬────┘      ┌──────────────────────┐     │ (manual)
        │ metadata         │ bytes     │ Actions validate.yml │     │
        ▼                  ▼           │ hassfest · HACS      │     ▼
- ┌──────────────┐ ┌──────────────────┐│ pytest · ruff        │ ┌────────────┐
- │ api.github   │ │ release-assets.  ││ NO secrets           │ │ HACS       │
- │   .com       │ │ githubusercontent││ NO write effects     │ │ custom     │
+ ┌──────────────┐ ┌──────────────────┐│ pytest · ruff · fmt  │ ┌────────────┐
+ │ api.github   │ │ release-assets.  ││ NO secrets, no writes│ │ HACS       │
+ │   .com       │ │ githubusercontent││ token: contents read │ │ custom     │
  │ /repos/home- │ │   .com           ││ GATES NOTHING        │ │ repository │
  │ assistant/   │ │ (302 target of   │└──────────────────────┘ └─────┬──────┘
  │ android/     │ │ browser_download │                               │
@@ -139,7 +147,7 @@ graph TB
         API["api.github.com<br/>/repos/home-assistant/android/releases"]
         CDN["release-assets.githubusercontent.com<br/>302 target of browser_download_url"]
         REPO["bartosekpetr/ha-companion-apk-mirror<br/>integration source - tags v1.0.0, v1.1.0"]
-        CI["Actions validate.yml<br/>hassfest, HACS, pytest, ruff<br/>no secrets, no write effects"]
+        CI["Actions validate.yml<br/>hassfest, HACS, pytest, ruff lint plus format<br/>no secrets, no write effects, token scope contents read"]
     end
 
     HACS["HACS<br/>custom repository"]
@@ -199,7 +207,7 @@ graph TB
 | `sensor.py` | two read-only projections: newest upstream, newest mirrored | |
 | `config_flow.py` | the **only** writer of the config entry; pre-flight validation against GitHub | Single instance, enforced twice (`_async_current_entries` and a `DOMAIN` unique id). |
 | `__init__.py` | entry setup/teardown and the three services | Services are removed only when the last entry unloads. |
-| `.github/workflows/validate.yml` | a CI signal **for humans** | hassfest, HACS action, pytest, ruff. Not on any artifact path. See §5. |
+| `.github/workflows/validate.yml` | a CI signal **for humans** | hassfest, HACS action, pytest, `ruff check` and `ruff format --check`. Not on any artifact path. See §5. |
 | `brand/` + `scripts/render_brand_icon.py` | the integration's own icon, generated at build time | Not imported at runtime. The install page carries a hand-inlined copy of the SVG. |
 | `docs/tablet-setup.md` | the consumer-side runbook (tap, ADB, automated ADB, rollback) | Describes behaviour outside this system's control. |
 | `hacs.json`, `manifest.json` | distribution and Home Assistant metadata | `manifest.json` version is bumped by hand; see §6. |
@@ -390,26 +398,27 @@ without changing route registration.
 | property | value | consequence |
 |---|---|---|
 | triggers | `push` (any branch), `pull_request`, `schedule` Mon 04:00 UTC, `workflow_dispatch` | The weekly run exists to catch drift with no commit — see §6. |
-| `permissions:` block | **absent** | The `GITHUB_TOKEN` gets the **repository/organisation default**, which is a GitHub *setting*, not a file in this repo. Not determinable from here; §8 marks it never probed. |
+| `permissions:` block | `contents: read`, declared **once at workflow level** since `227c501`, so all four jobs inherit it | The token scope no longer depends on the repository/organisation default setting — it is in the file. Read-only `contents` and nothing else: no `pull-requests`, no `issues`, no `packages`, no `id-token`. |
+| checkout credentials | `persist-credentials: false` on **every** checkout step | The job token is not written into `.git/config`, so a later step — or a transitively installed package — cannot read it back out of the workspace. |
 | `secrets.*` references | **zero** | Nothing in the pipeline needs a secret, so there is nothing for a fork PR to exfiltrate. |
 | fork-PR trigger | `pull_request`, **not** `pull_request_target` | **This is the load-bearing line.** Fork code runs against the merge ref with a read-only token, no repository secrets and no push ability. Changing this one word to `pull_request_target` would run untrusted fork code with the base repo's token and secrets. |
 | write side effects | **none** — no release, no publish, no commit, no artifact upload, no deploy | |
 | anything downstream consuming the result | **nothing** | HACS reads the repo's tags and releases directly. A red build does not block an install. |
-| action pinning | `home-assistant/actions/hassfest@master`, `hacs/action@main` — **mutable branches**; `actions/checkout@v7`, `actions/setup-python@v7` — mutable tags; `astral-sh/ruff-action@v4.1.0` — the only patch-pinned one | Third-party code can change under four of the five refs with nobody acting. §6. |
+| action pinning | since `227c501`, **all four** `uses:` are 40-hex commit SHAs with the human-readable ref in a trailing comment. `astral-sh/ruff-action` is gone, replaced by an explicit `pip install ruff==0.17.3` | **Pinning the ref is not the same as pinning what executes.** It is load-bearing for `checkout` and `setup-python` and close to cosmetic for `hassfest` and `hacs/action` — §5.1 is the whole point of this section now. |
 
 ```mermaid
 graph TB
     subgraph trusted["Trusted: a push to this repo"]
-        PUSH["push or workflow_dispatch<br/>token: repo/org default scope"]
+        PUSH["push or workflow_dispatch<br/>token scope contents read<br/>declared in the workflow file"]
     end
     subgraph untrusted["Untrusted: a fork pull request"]
         FORK["pull_request from a fork<br/>read-only token<br/>NO access to repository secrets"]
     end
     subgraph jobs["validate.yml - 4 jobs, identical in both cases"]
-        H["hassfest"]
-        HC["HACS action"]
-        T["pytest"]
-        R["ruff"]
+        H["hassfest<br/>pinned wrapper, mutable container"]
+        HC["HACS action<br/>pinned wrapper, mutable container"]
+        T["pytest<br/>pinned end to end"]
+        R["ruff check plus ruff format --check<br/>pinned end to end"]
     end
     OUT["pass / fail status<br/>and nothing else"]
     PUSH --> jobs
@@ -418,10 +427,42 @@ graph TB
     OUT -.->|"no consumer: HACS reads tags directly"| NONE["nothing downstream"]
 ```
 
-Because there are no secrets and no write effects, the boundary currently holds
-**by absence rather than by configuration**. It would be broken by adding a
-secret, adding a write permission, or switching to `pull_request_target` — not
-by anything in the workflow as it stands.
+Before `227c501` this boundary held **by absence**: no secret to steal and no
+write step to hijack, but a token whose actual scope lived in a GitHub setting
+that could not be read from the repository. It now holds **by configuration as
+well** — `contents: read` is declared in the file, and `persist-credentials:
+false` keeps even that token out of the workspace. It would still be broken by
+adding a secret, widening `permissions:`, or switching to `pull_request_target`,
+and that last one is still a one-word change.
+
+### 5.1 What the SHA pins actually pin
+
+`227c501` replaced every mutable action ref with a commit SHA. Fetched at exactly
+those SHAs on 2026-11-24, here is what each pinned commit contains — and this is
+the part that is easy to read the wrong way off the diff:
+
+| pinned ref | what the pinned commit holds | what actually runs |
+|---|---|---|
+| `actions/checkout@3d3c42e` | the action's own compiled JavaScript | that JavaScript. **Genuinely pinned.** |
+| `actions/setup-python@6d4fd22` | the action's own compiled JavaScript | that JavaScript. **Genuinely pinned.** |
+| `home-assistant/actions/hassfest@86d4564` | a short *composite* action: two steps, one registering a problem matcher and one running `docker run ... ghcr.io/home-assistant/hassfest` — with **no image tag at all** | whatever `ghcr.io/home-assistant/hassfest:latest` resolves to at run time |
+| `hacs/action@1ebf01c` | `action.yml`, `README.md`, a licence and the repo's own CI config — **and no checker code whatsoever**. It is a docker action: `image: docker://ghcr.io/hacs/action:main` | whatever `ghcr.io/hacs/action:main` resolves to at run time |
+
+So the pinning fixed the two actions that carry their own code and changed
+nothing about the two that delegate to a container. **The drift did not go away;
+it moved from a git ref this repository names to a container tag it does not.**
+
+That is still a real improvement, because a git ref is the part a third party
+could force-push and the part no reviewer here could audit. But a reader who
+concludes "CI is reproducible now" from the diff of `227c501` is wrong for half
+the matrix, and §6 and §7 are written accordingly.
+
+One further consequence of the new `permissions:` block, worth naming because it
+is a silent narrowing rather than an error: `hacs/action` defaults `comment:
+"true"` and takes a `github_token` defaulting to `${{ github.token }}`, and
+posting a pull-request comment needs `pull-requests: write`, which this workflow
+does not grant. Whether the action then fails the job or swallows the refusal
+happens inside the container image and **was not probed** — §8.
 
 ---
 
@@ -435,8 +476,10 @@ by anything in the workflow as it stands.
 | **release-notes text rendered in the Home Assistant frontend** | upstream edits a release body | next poll. Upstream-controlled Markdown, rendered in the HA UI. |
 | **which release is "latest"** | upstream publishes, retags or deletes a release | next poll |
 | **hassfest / HACS verdict** | both actions validate against **live** upstream schemas | any run, including the weekly cron with no commit |
-| **what four of the five CI actions actually execute** | `@master`, `@main` and `@v7` are mutable refs | any run |
+| **what the `hassfest` and `hacs` jobs actually execute** | both pinned actions are thin wrappers that pull a container by mutable tag — `ghcr.io/home-assistant/hassfest` untagged, so `:latest`, and `ghcr.io/hacs/action:main`. §5.1 | any run. SHA-pinning in `227c501` did **not** close this. |
 | **the Python version CI tests on** | `python-version: "3.13"` is pinned, and `requirements-test.txt` pins `pytest-homeassistant-custom-component==0.13.316` exactly | **nothing drifts here.** The cost is the mirror image: a breaking change in a newer Home Assistant is invisible until someone bumps that pin. |
+| **`actions/checkout` and `actions/setup-python`** | SHA-pinned since `227c501`, and they carry their own code | **nothing drifts here.** This is the half of the pinning that actually bought something. |
+| **the ruff version, and so the lint and format verdict** | `ruff==0.17.3` installed by an explicit `pip install` since `227c501`. The removed `astral-sh/ruff-action@v4.1.0` defaulted `version: ""`, which resolves from a `pyproject.toml` searched upward — and this repo has only `.ruff.toml`, so it fell through to **`latest` ruff on every single run** | **nothing drifts here any more.** It is the one change in `227c501` that removed a real, daily source of unexplained red. The old action also defaulted `args: check`, so `ruff format --check` is a gate that did not exist before at all. |
 
 ### What has no rollback
 
@@ -445,7 +488,7 @@ by anything in the workflow as it stands.
 | **a purged APK** | the file is deleted. Re-fetching works only while that version is still inside the newest 30 releases (`RELEASES_PAGE_SIZE`); after that the version is gone from the mirror's reach entirely. |
 | **an Android install** | Android enforces a monotonic `versionCode`. Downgrading requires an uninstall, which clears app data. |
 | **the first switch away from a Play Store or F-Droid build** | different signing key, so the existing app must be uninstalled; its local settings and Home Assistant login are lost. One-way. |
-| **a mutable-ref action that changed behaviour** | nothing records which commit of `hassfest@master` a past green run used. A previously green commit cannot be re-validated identically. |
+| **a container image that changed behaviour** | `227c501` records which *commit* of the two wrapper actions ran, but nothing records which *image digest* `ghcr.io/home-assistant/hassfest` or `ghcr.io/hacs/action:main` resolved to. A past green run of those two jobs still cannot be reproduced identically. The `tests` and `ruff` jobs now can. |
 | **the integration's own version** | the `manifest.json` bump, the tag and the GitHub release are three manual steps with no workflow behind them and no check that they agree. A tag pointing at a commit whose `manifest.json` says something else is possible and would not be caught. |
 
 ---
@@ -468,7 +511,9 @@ by anything in the workflow as it stands.
 | a served APK's real hash differs from `X-Apk-Sha256` | the mirror directory | the header comes from `index.json`, not from the file being served; §3.2 #2 |
 | an older version vanished from `manifest.json` → `available` | the purge | `keep_versions`, default 2, applied **per flavor** — not 2 in total |
 | `version_code` is `null` for a mirrored APK | **not a fault** | `version_code.txt` was absent from the release, or that one fetch failed; it is best-effort and logged at debug only |
-| CI turns red with no code change | a mutable-ref action, or a live upstream schema | `hassfest@master` / `hacs/action@main`; the weekly cron exists to surface this |
+| CI turns red with no code change | the `hassfest` or `hacs` container image, or a live upstream schema | those two jobs are SHA-pinned wrappers that still pull `:latest` / `:main` containers (§5.1); the weekly cron exists to surface this. The `tests` and `ruff` jobs are pinned end to end and should **not** move on their own — if one of those turns red with no commit, suspect the environment, not drift |
+| the Ruff job fails and `ruff check` itself reports nothing | the `Ruff format` step | a gate `227c501` added; it did not exist before. Run `ruff format .` with **0.17.3** specifically — a different ruff version can disagree about formatting and will fight CI |
+| the HACS job stops commenting on pull requests | **not a fault** | `permissions: contents: read` grants no `pull-requests: write`, so the action's default comment cannot be posted. The pass/fail status is unaffected; §5.1 |
 | `tests/test_brand_icon.py` fails after an icon edit | the generated PNGs or the inlined SVG | re-run `scripts/render_brand_icon.py`, and update `http_views.ICON_SVG` to match `brand/icon.svg` |
 
 ---
@@ -478,24 +523,36 @@ by anything in the workflow as it stands.
 Because this diagram was derived from a repository and not from a live
 installation, the three levels mean:
 
-- **measured** — asserted by a test that was executed in this run, 2026-11-19.
-- **observed-only** — read directly out of the source or config at `f4e1409`.
+- **measured** — either asserted by a test that was executed, or read back from
+  the pinned upstream artifact itself over a read-only fetch. The date is part of
+  the claim; measurements age.
+- **observed-only** — read directly out of the source or config at `227c501`.
   Deterministic and checkable, but not exercised.
 - **inferred** — not present in this repository. Derived from upstream
   behaviour, the GitHub platform, the Android platform or this repo's prose.
 
 Only one of the three test suites could be executed in this environment:
-`tests/test_logic.py` needs nothing but the standard library. The other two
-import Home Assistant, and installing
-`pytest-homeassistant-custom-component==0.13.316` here failed — `lru-dict` has
-no wheel for this interpreter and there are no Python headers to build it. So
-their assertions are **read, not run**, and they are marked accordingly below
-rather than claimed as measured. CI runs all three on every push.
+`tests/test_logic.py` needs nothing but the standard library and runs as a plain
+script. The other two import Home Assistant, and
+`pytest-homeassistant-custom-component==0.13.316` cannot be installed here —
+there is no `pip` on this host at all, and on 2026-11-19 the install failed
+because `lru-dict` has no wheel for this interpreter and there are no Python
+headers to build it. So their assertions are **read, not run**, and they are
+marked accordingly below rather than claimed as measured. CI runs all three on
+every push.
+
+The same missing `pip` is why the two new ruff gates are **not** marked measured
+below: there is no `ruff` on this host and no way to install the pinned 0.17.3 to
+check the tree against it.
 
 | edge | status |
 |---|---|
-| release list → `ReleaseInfo`: version parsing, ordering, draft / prerelease / asset gates, API-order independence | ✅ **measured** — `tests/test_logic.py` executed 2026-11-19, 14/14 passing |
-| **no expected-hash or signature comparison exists anywhere** | ✅ **measured by exhaustive grep** — every `sha256` site computes or reports; none compares |
+| release list → `ReleaseInfo`: version parsing, ordering, draft / prerelease / asset gates, API-order independence | ✅ **measured** — `tests/test_logic.py` executed 2026-11-19 and re-executed 2026-11-24, 14/14 passing both times. `github.py` is byte-identical since `f4e1409`, so the suite is testing the same module |
+| **no expected-hash or signature comparison exists anywhere** | ✅ **measured by exhaustive grep** — re-run 2026-11-24; every `sha256` site computes or reports, none compares |
+| `hassfest@86d4564` being a composite action that runs an **untagged** `ghcr.io/home-assistant/hassfest` container | ✅ **measured** — its `action.yml` fetched at that exact SHA, 2026-11-24 |
+| `hacs/action@1ebf01c` being a docker action on `ghcr.io/hacs/action:main`, with no checker code in the pinned commit | ✅ **measured** — its `action.yml` and that commit's complete file listing fetched at that SHA, 2026-11-24 |
+| the removed `astral-sh/ruff-action@v4.1.0` resolving to `latest` ruff for this repo, and running `check` only | ✅ **measured** — its `action.yml` fetched at tag `v4.1.0`, 2026-11-24; the `version` and `args` defaults read directly, and this repo has no `pyproject.toml` for it to resolve a version from |
+| zero `secrets.*` references anywhere in `.github/` | ✅ **measured by grep** — re-run 2026-11-24, no matches |
 | poll → select → download → index → HTTP endpoints, end to end | 🟡 **observed-only** — `tests/test_integration.py` asserts it against mocked hosts, but was **not executed in this run**; see the note below on what "mocked" excludes anyway |
 | a truncated download is deleted and never served | 🟡 **observed-only** — `test_truncated_download_is_not_served`, not executed here |
 | `require_auth` blocks an anonymous request | 🟡 **observed-only** — `test_require_auth_blocks_anonymous_requests`, not executed here |
@@ -510,14 +567,19 @@ rather than claimed as measured. CI runs all three on every push.
 | views outliving the config entry and answering `503` | 🟡 **observed-only** — the registration guard is explicit in the source; the tests cover service removal, not route lifetime |
 | the token being sent to the API and withheld from the asset host | 🟡 **observed-only** — explicit in `coordinator.py` and `store.py`, with a comment; not observed on the wire |
 | auto-download returning the pre-download snapshot | 🟡 **observed-only** — read from `_async_update_data`; no test asserts the intermediate state |
-| fork PRs having nothing to reach | 🟡 **observed-only** for the facts (`pull_request`, zero `secrets.*`); ⚪ **inferred** for the platform semantics of that trigger |
-| the real `api.github.com` responses, including rate-limit body text | ⚪ **inferred** — no live call was made in this run. The rate-limit branch matches the literal string `"rate limit"`, which is an assumption about GitHub's wording |
+| fork PRs having nothing to reach | 🟡 **observed-only** for the facts (`pull_request`, zero `secrets.*`, `permissions: contents: read`); ⚪ **inferred** for the platform semantics of that trigger |
+| `ruff check .` and `ruff format --check .` passing on this tree | 🟡 **observed-only** — `227c501` reformatted five files in the same commit that added the gate, and `.ruff.toml` sets `line-length = 88`; neither command was executed here |
+| the five Python and test files in `227c501` being behaviour-neutral reflows | 🟡 **observed-only** — every hunk read line by line in `git diff 20c93a6..227c501`; they are line-joins and parenthesis moves with no changed identifier, literal or control flow. The integration suite that would prove it could not be run |
+| the real `api.github.com` responses, including rate-limit body text | ⚪ **inferred** — the releases endpoint was never called in any run of this routine. The 2026-11-24 fetches named in the provenance paragraph went to action metadata only, under no token, and tell you nothing about the releases path. The rate-limit branch matches the literal string `"rate limit"`, which is still an assumption about GitHub's wording |
 | the real redirect to `release-assets.githubusercontent.com` | ⚪ **inferred** — the tests use a fictional `objects.githubusercontent.test`; the real host is named only in `README.md` |
 | upstream still publishing the five asset names in `FLAVOR_ASSETS` | ⚪ **inferred** — a hardcoded table, never checked against live upstream here |
 | upstream signing the APK with the Home Assistant project key | ⚪ **inferred** — happens in `home-assistant/android`; nothing in this repo observes or verifies it |
 | Android rejecting a cross-key replace, and enforcing `versionCode` monotonicity | ⚪ **inferred** — Android platform behaviour as documented in `README.md` and `docs/tablet-setup.md`; not reproduced |
 | a GitHub release asset being replaceable in place | ⚪ **inferred** — GitHub platform behaviour, not tested |
-| the effective scope of the CI `GITHUB_TOKEN` | ⚪ **never probed** — no `permissions:` block, so it is the repository/organisation default, which is a GitHub setting and not visible from the repository |
+| the effective scope of the CI `GITHUB_TOKEN` | 🟡 **observed-only** — `permissions: contents: read` is declared in `validate.yml` since `227c501`, so it is in the repository and no longer depends on the organisation default. That default setting is still unprobed, and no longer governs this workflow |
+| what digest the two `ghcr.io` images resolve to on any given run | ⚪ **never probed** — no digest was looked up and no image was pulled. §5.1 is a measurement about the pinned *wrapper*, not about the image it runs |
+| whether `hacs/action`'s default PR comment fails the job or is swallowed under `contents: read` | ⚪ **never probed** — that logic lives in the container image, not in the pinned commit |
+| `persist-credentials: false` keeping the token out of `.git/config` | ⚪ **inferred** — documented `actions/checkout` behaviour; not observed on a runner |
 | which commit HACS actually serves a user | ⚪ **inferred** — two tags exist and no release workflow does; tag-vs-branch resolution is HACS's behaviour, not this repo's |
 | anything about a real tablet, or whether any device ever installed a mirrored APK | ⚪ **never probed** — no device was contacted |
 
@@ -529,7 +591,9 @@ asset sizes, or rate limiting. The two substitution points that matter most —
 the LAN hop and the mirror directory — are not exercised by any test at all.
 
 **Worth closing if this diagram is ever used for change planning.** Three
-read-only checks: the repository's Actions token-permission setting; whether
+read-only checks: the digests `ghcr.io/home-assistant/hassfest` and
+`ghcr.io/hacs/action:main` currently resolve to, which is what would make the
+`hassfest` and `hacs` jobs as reproducible as the other two already are; whether
 upstream publishes any checksum or attestation asset that the mirror could
 actually verify against (`const.py` knows only the APKs and `version_code.txt`);
 and one live call to `api.github.com` to confirm the rate-limit body wording the
