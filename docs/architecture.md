@@ -3,17 +3,22 @@
 What this project is made of, where an artifact's identity is established, where
 it could be substituted, and which way data moves across every edge.
 
-*Diagram current as of `227c501` — 2026-11-24.* Kept up to date by the
+*Diagram current as of `9371166` — 2026-11-26.* Kept up to date by the
 "Architecture diagram upkeep — ha companion apk mirror" routine, which re-checks
 this file against the commits made since that baseline whenever work happens in
 the project. Checked `f4e1409..075e665` on 2026-11-20 and `075e665..20c93a6` on
 2026-11-23; neither range touched anything outside this file. `20c93a6..227c501`
 **did** change the system: `227c501` rewrote the CI workflow's permission and
-pinning model, so §2, §5, §6, §7 and §8 are revised here. Nothing else moved —
-the five Python and test files in that commit are `ruff format` reflows with no
-behavioural change, and `github.py`, `store.py`, `const.py`, `sensor.py`,
-`update.py` and `entity.py` are byte-identical since `f4e1409`. Every claim in
-§0, §1, §3 and §4 therefore still stands as written.
+pinning model, so §2, §5, §6, §7 and §8 were revised for it in `9371166`.
+Nothing else moved — the five Python and test files in that commit are `ruff
+format` reflows with no behavioural change, and `github.py`, `store.py`,
+`const.py`, `sensor.py`, `update.py` and `entity.py` are byte-identical since
+`f4e1409`. Every claim in §0, §1, §3 and §4 therefore still stands as written.
+Checked `227c501..9371166` on 2026-11-26: that range is the single commit
+carrying those revisions and touches nothing else, so no claim is re-revised
+here — only the baseline moves. The derivation sha in the next paragraph stays
+at `227c501` because `git diff 227c501..HEAD` is this document and nothing else,
+so every statement below still describes exactly the tree it names.
 
 Derived from the code, config, CI workflow, tests and docs in this repository at
 `227c501`. No live system belonging to this project was touched: no release was
